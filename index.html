@@ -1,0 +1,214 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="robots" content="noindex, nofollow">
+<title>Бинго друзей</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Forum&family=Cormorant+Garamond:ital,wght@0,500;0,600;0,700;1,500;1,600&display=swap">
+<style>
+  :root {
+    --ink: #3E2236;
+    --line: #8C6A80;
+    --card: rgba(250, 245, 247, 0.62);
+    --card-found: rgba(255, 255, 255, 0.88);
+    --border: #B89AAE;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; }
+  body {
+    min-height: 100vh;
+    background: #F2D4DC;
+    color: var(--ink);
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    -webkit-text-size-adjust: 100%;
+  }
+  .bg { position: fixed; inset: 0; z-index: 0; overflow: hidden; pointer-events: none; }
+  .bg img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+  .bg .clouds { opacity: 0.35; object-position: center 30%; }
+  .bg .sketch { opacity: 0.4; mix-blend-mode: multiply; }
+  .bg .veil { position: absolute; inset: 0; background: #FAF5F7; opacity: 0.6; }
+
+  main {
+    position: relative; z-index: 1;
+    max-width: 620px; margin: 0 auto;
+    padding: max(28px, env(safe-area-inset-top)) 16px 40px;
+  }
+  header { position: relative; text-align: center; padding: 8px 0 18px; }
+  h1 {
+    margin: 0; font-family: 'Forum', serif; font-weight: 400;
+    font-size: clamp(30px, 8.4vw, 42px); line-height: 1.05;
+    letter-spacing: 0.05em; text-transform: uppercase;
+  }
+  .sub { margin: 8px 0 0; font-style: italic; font-weight: 500; font-size: 21px; }
+  .progress {
+    margin: 14px auto 0; display: inline-flex; align-items: center; gap: 8px;
+    padding: 6px 14px; border: 1px solid var(--border); border-radius: 999px;
+    background: var(--card); font-weight: 600; font-size: 15px; letter-spacing: 0.04em;
+  }
+  .star { position: absolute; filter: drop-shadow(0 0 4px rgba(255,255,255,.95)); }
+
+  .grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  @media (min-width: 520px) { .grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+  .card {
+    position: relative; display: flex; flex-direction: column; gap: 8px;
+    min-height: 128px; padding: 12px 12px 10px;
+    background: var(--card); border: 1px solid var(--border); border-radius: 6px;
+    transition: background .25s, border-color .25s, box-shadow .25s;
+  }
+  .card.found { background: var(--card-found); border-color: var(--ink); box-shadow: 0 0 0 1px var(--ink) inset, 0 0 18px rgba(255,255,255,.7); }
+  .card .badge { position: absolute; top: 6px; right: 7px; width: 14px; height: 14px; opacity: 0; transition: opacity .25s; }
+  .card.found .badge { opacity: 1; }
+  .fact {
+    flex-grow: 1; display: flex; align-items: center; justify-content: center;
+    margin: 0; text-align: center; font-style: italic; font-weight: 500;
+    font-size: 16px; line-height: 1.18; text-wrap: balance;
+  }
+  textarea.fact {
+    width: 100%; min-height: 64px; resize: none; border: 0; background: transparent;
+    color: var(--ink); font-family: inherit; padding: 0; outline: none;
+    border-bottom: 1px dashed transparent; field-sizing: content;
+  }
+  textarea.fact::placeholder { color: var(--line); opacity: 1; }
+  textarea.fact:focus { border-bottom-color: var(--line); }
+  label.name { display: block; }
+  label.name span {
+    position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0);
+  }
+  input.name {
+    width: 100%; min-height: 36px; padding: 4px 2px 2px; border: 0;
+    border-top: 1px solid var(--line); background: transparent; color: var(--ink);
+    font-family: inherit; font-size: 16px; font-weight: 700; letter-spacing: 0.04em;
+    outline: none; border-radius: 0;
+  }
+  input.name::placeholder { color: var(--line); font-weight: 600; font-size: 12px; letter-spacing: 0.2em; text-transform: uppercase; opacity: 1; }
+  input.name:focus { border-top-color: var(--ink); }
+
+  .done {
+    display: none; margin: 20px 0 0; text-align: center;
+    font-family: 'Forum', serif; font-size: 30px; letter-spacing: 0.06em; text-transform: uppercase;
+  }
+  .done.show { display: block; }
+  footer { margin-top: 26px; text-align: center; font-size: 15px; font-style: italic; color: var(--ink); }
+  footer p { margin: 0 0 12px; }
+  button.reset {
+    min-height: 44px; padding: 8px 18px; border: 1px solid var(--line); border-radius: 999px;
+    background: var(--card); color: var(--ink); font-family: inherit; font-size: 15px; font-weight: 600; cursor: pointer;
+  }
+  button.reset:hover { background: var(--card-found); }
+</style>
+</head>
+<body>
+<div class="bg" aria-hidden="true">
+  <img src="img/ground.jpg" alt="">
+  <img class="clouds" src="img/clouds.jpg" alt="">
+  <img class="sketch" src="img/sketch.jpg" alt="">
+  <div class="veil"></div>
+</div>
+
+<main>
+  <header>
+    <svg class="star" style="left: 2px; top: 0" width="22" height="22" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 0 L13 9 L22 11 L13 13 L11 22 L9 13 L0 11 L9 9 Z" fill="#fff"/></svg>
+    <svg class="star" style="right: 4px; top: 54px" width="34" height="34" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 0 L13 9 L22 11 L13 13 L11 22 L9 13 L0 11 L9 9 Z" fill="#fff"/></svg>
+    <h1>бинго друзей</h1>
+    <p class="sub">найди ту/того, кто…</p>
+    <p class="progress" aria-live="polite">найдено <span id="count">0</span> из <span id="total"></span></p>
+  </header>
+
+  <section class="grid" id="grid" aria-label="Карточки бинго"></section>
+
+  <p class="done" id="done" aria-live="polite">бинго! ✦ все найдены</p>
+
+  <footer>
+    <p>впиши имя под фактом, когда найдёшь человека. всё сохраняется только на твоём телефоне</p>
+    <button class="reset" id="reset" type="button">очистить мою карточку</button>
+  </footer>
+</main>
+
+<script src="facts.js"></script>
+<script>
+  const FACTS = window.FACTS || [];
+  const KEY = 'nastasja-bingo-v1';
+
+  // names are keyed by the fact text, so editing facts.js later only resets the changed card;
+  // a guest's own fact cell is keyed by its position
+  const idOf = (fact, i) => fact ? 'f:' + fact : 'own:' + i;
+  let state = { names: {}, facts: {} };
+  try {
+    const saved = JSON.parse(localStorage.getItem(KEY) || 'null');
+    if (saved && saved.names && !Array.isArray(saved.names)) state = { names: saved.names, facts: saved.facts || {} };
+  } catch (e) { /* storage unavailable: the card still works, it just won't persist */ }
+
+  function save() {
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+
+  const grid = document.getElementById('grid');
+  const starSvg = '<svg class="badge" viewBox="0 0 22 22" aria-hidden="true"><path d="M11 0 L13 9 L22 11 L13 13 L11 22 L9 13 L0 11 L9 9 Z" fill="#3E2236"/></svg>';
+
+  FACTS.forEach((fact, i) => {
+    const card = document.createElement('div');
+    card.className = 'card';
+    card.innerHTML = starSvg;
+
+    let factEl;
+    if (fact) {
+      factEl = document.createElement('p');
+      factEl.className = 'fact';
+      factEl.textContent = fact;
+    } else {
+      factEl = document.createElement('textarea');
+      factEl.className = 'fact';
+      factEl.rows = 3;
+      factEl.placeholder = 'впиши факт';
+      factEl.setAttribute('aria-label', 'Свой факт, карточка ' + (i + 1));
+      factEl.value = state.facts[idOf(fact, i)] || '';
+      factEl.addEventListener('input', () => { state.facts[idOf(fact, i)] = factEl.value; save(); });
+    }
+    card.appendChild(factEl);
+
+    const label = document.createElement('label');
+    label.className = 'name';
+    label.innerHTML = '<span>Имя, карточка ' + (i + 1) + '</span>';
+    const input = document.createElement('input');
+    input.className = 'name';
+    input.type = 'text';
+    input.placeholder = 'имя';
+    input.autocomplete = 'off';
+    input.autocapitalize = 'words';
+    input.value = state.names[idOf(fact, i)] || '';
+    input.addEventListener('input', () => { state.names[idOf(fact, i)] = input.value; save(); update(); });
+    label.appendChild(input);
+    card.appendChild(label);
+
+    grid.appendChild(card);
+  });
+
+  function update() {
+    const cards = grid.querySelectorAll('.card');
+    let n = 0;
+    cards.forEach((c, i) => {
+      const name = state.names[idOf(FACTS[i], i)];
+      const found = !!(name && name.trim());
+      c.classList.toggle('found', found);
+      if (found) n++;
+    });
+    document.getElementById('count').textContent = n;
+    document.getElementById('total').textContent = FACTS.length;
+    document.getElementById('done').classList.toggle('show', n === FACTS.length);
+  }
+  update();
+
+  document.getElementById('reset').addEventListener('click', () => {
+    if (!confirm('Стереть все имена и свои факты на этой карточке?')) return;
+    state = { names: {}, facts: {} };
+    save();
+    grid.querySelectorAll('input.name, textarea.fact').forEach(el => { el.value = ''; });
+    update();
+  });
+</script>
+</body>
+</html>
